@@ -21,3 +21,11 @@ Customization ideas
 
 License
 - You can use and modify this freely in your repository.
+
+Attribution
+
+This project was adapted from work by Dimas Abreu Archanjo Dutra:
+<https://github.com/dimasad/caex-qrcode?tab=MIT-1-ov-file>
+
+Original code and assets are licensed under the MIT License (see LICENSE).
+Modifications and hosting by Gage Beeman (https://github.com/gage-beem).
