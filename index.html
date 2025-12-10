@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>QR Code Generator</title>
+  <meta name="description" content="Simple static QR code generator — enter text or a URL, preview it and download the PNG." />
+  <style>
+    :root {
+      --bg: #f6f8fa;
+      --card: #fff;
+      --accent: #0b63ff;
+      --muted: #58606a;
+      --radius: 12px;
+    }
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: linear-gradient(180deg,#f8fafc 0%,var(--bg) 100%);
+      color:#111827;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:28px;
+    }
+    .wrap{
+      width:100%;
+      max-width:920px;
+      background:var(--card);
+      border-radius:var(--radius);
+      box-shadow:0 8px 30px rgba(17,24,39,0.08);
+      padding:28px;
+      box-sizing:border-box;
+    }
+    header{
+      display:flex;
+      gap:16px;
+      align-items:center;
+      margin-bottom:18px;
+    }
+    header h1{
+      font-size:20px;
+      margin:0;
+    }
+    .meta{color:var(--muted); font-size:13px}
+    .grid{
+      display:grid;
+      grid-template-columns:1fr 320px;
+      gap:20px;
+    }
+    @media (max-width:880px){ .grid{grid-template-columns:1fr} }
+    .card{
+      background:linear-gradient(180deg,rgba(255,255,255,0.6),rgba(255,255,255,0.9));
+      border-radius:10px;
+      padding:14px;
+      box-sizing:border-box;
+      border:1px solid rgba(15,23,42,0.03);
+    }
+    label{display:block; font-weight:600; margin-bottom:8px; font-size:13px}
+    .input, textarea, select{
+      width:100%;
+      font-size:14px;
+      padding:10px 12px;
+      border-radius:8px;
+      border:1px solid #dfe6ef;
+      box-sizing:border-box;
+      background:#fff;
+    }
+    textarea{min-height:96px; resize:vertical}
+    .controls{display:flex; gap:8px; align-items:center; margin-top:10px; flex-wrap:wrap}
+    button{
+      background:var(--accent);
+      color:white;
+      border:0;
+      padding:9px 12px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:600;
+    }
+    button.secondary{
+      background:#eef2ff;
+      color:var(--accent);
+      border:1px solid rgba(11,99,255,0.08);
+    }
+    .preview{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:12px;
+    }
+    .qrbox{
+      background:linear-gradient(180deg,#fff,#fbfdff);
+      padding:18px;
+      border-radius:12px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height:320px;
+      border:1px solid rgba(2,6,23,0.04);
+      box-sizing:border-box;
+    }
+    .muted{color:var(--muted); font-size:13px}
+    .inline{display:flex; gap:8px; align-items:center}
+    .footer{
+      margin-top:14px;
+      font-size:13px;
+      color:var(--muted);
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:center;
+    }
+    a.link{ color:var(--accent); text-decoration:none; font-weight:600 }
+    small.note{color:var(--muted)}
+    input[type="range"]{width:150px}
+  </style>
+</head>
+<body>
+  <main class="wrap" role="main">
+    <header>
+      <div>
+        <h1>QR Code Generator</h1>
+        <div class="meta">Enter text or a URL, preview the QR code, and download it as PNG.</div>
+      </div>
+    </header>
+
+    <section class="grid" aria-labelledby="generator">
+      <div class="card" id="generator">
+        <label for="text">Text or URL</label>
+        <textarea id="text" placeholder="https://example.com or any text">https://dimasad.github.io/caex-qrcode/</textarea>
+
+        <div style="display:flex; gap:10px; margin-top:12px; align-items:center;">
+          <div style="flex:1">
+            <label for="size">Size: <span id="sizeLabel">300</span>px</label>
+            <div class="inline">
+              <input id="size" type="range" min="128" max="1024" value="300" />
+            </div>
+          </div>
+
+          <div style="width:140px;">
+            <label for="ec">Error correction</label>
+            <select id="ec" class="input" aria-label="Error correction level">
+              <option value="L">L — ~7% (small)</option>
+              <option value="M">M — ~15% (default)</option>
+              <option value="Q">Q — ~25%</option>
+              <option value="H" selected>H — ~30% (best)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="controls">
+          <button id="generate">Generate</button>
+          <a id="download" class="secondary" href="#" download="qrcode.png" role="button">
+            <button class="secondary" style="padding:8px 10px">Download PNG</button>
+          </a>
+          <button id="copy" class="secondary" title="Copy text to clipboard">Copy text</button>
+          <div style="flex:1"></div>
+          <div class="muted" id="status" aria-live="polite">Ready</div>
+        </div>
+      </div>
+
+      <aside class="card preview" aria-labelledby="previewTitle">
+        <h2 id="previewTitle" style="margin:0; font-size:15px">Preview</h2>
+        <div class="qrbox" id="qrbox" role="img" aria-label="QR code preview area">
+          <!-- QR preview image goes here -->
+          <img id="qrcodeImage" alt="QR code preview" style="max-width:100%; height:auto; display:none;" />
+        </div>
+
+        <div style="width:100%; display:flex; justify-content:space-between; align-items:center; gap:12px;">
+          <div class="muted">PNG only — right-click image to save or use Download button</div>
+          <div><small class="note">Generated client-side — no data sent to server</small></div>
+        </div>
+      </aside>
+    </section>
+
+    <div class="footer">
+      <small>Built for GitHub Pages — just push these files to the repository root.</small>
+      <small>Want to test at <a class="link" href="https://dimasad.github.io/caex-qrcode/" target="_blank" rel="noopener">dimasad/caex-qrcode</a>?</small>
+    </div>
+  </main>
+
+  <!-- QR code library (lightweight) -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js" integrity="" crossorigin="anonymous"></script>
+
+  <script>
+    (function () {
+      const textEl = document.getElementById('text');
+      const genBtn = document.getElementById('generate');
+      const downloadEl = document.getElementById('download');
+      const qImg = document.getElementById('qrcodeImage');
+      const status = document.getElementById('status');
+      const sizeRange = document.getElementById('size');
+      const sizeLabel = document.getElementById('sizeLabel');
+      const ecSelect = document.getElementById('ec');
+      const copyBtn = document.getElementById('copy');
+
+      function setStatus(msg, isError) {
+        status.textContent = msg;
+        status.style.color = isError ? '#c02f2f' : '';
+      }
+
+      async function generate() {
+        const text = (textEl.value || '').trim();
+        if (!text) {
+          setStatus('Please enter text or a URL', true);
+          qImg.style.display = 'none';
+          return;
+        }
+        setStatus('Generating…');
+        const size = parseInt(sizeRange.value, 10) || 300;
+        const ec = (ecSelect.value || 'M');
+
+        try {
+          // Use the qrcode library to create a PNG data URL
+          const opts = {
+            errorCorrectionLevel: ec,
+            type: 'image/png',
+            width: size,
+            margin: 1,
+            color: {
+              dark: '#000000',
+              light: '#ffffff'
+            }
+          };
+          const dataUrl = await QRCode.toDataURL(text, opts);
+
+          qImg.src = dataUrl;
+          qImg.alt = 'QR code for: ' + text;
+          qImg.style.display = 'block';
+
+          // Update download link
+          downloadEl.href = dataUrl;
+          downloadEl.setAttribute('download', makeFilename(text));
+
+          setStatus('Ready');
+        } catch (err) {
+          console.error(err);
+          setStatus('Failed to generate QR code', true);
+        }
+      }
+
+      function makeFilename(text) {
+        // Create a friendly filename based on hostname or first words
+        try {
+          const u = new URL(text);
+          return `qrcode-${u.hostname}.png`;
+        } catch {
+          const safe = text.replace(/[^a-z0-9-_]/gi, '_').slice(0, 32) || 'qrcode';
+          return `qrcode-${safe}.png`;
+        }
+      }
+
+      genBtn.addEventListener('click', generate);
+      sizeRange.addEventListener('input', () => {
+        sizeLabel.textContent = sizeRange.value;
+      });
+
+      // generate on Enter in textarea (with Ctrl/Cmd+Enter to avoid accidental)
+      textEl.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+          generate();
+        }
+      });
+
+      copyBtn.addEventListener('click', async () => {
+        const text = textEl.value || '';
+        try {
+          await navigator.clipboard.writeText(text);
+          setStatus('Copied text to clipboard');
+          setTimeout(()=> setStatus('Ready'), 1500);
+        } catch (err) {
+          setStatus('Could not copy text', true);
+        }
+      });
+
+      // Generate initial preview
+      window.addEventListener('load', () => {
+        setTimeout(generate, 150);
+      });
+    })();
+  </script>
+</body>
+</html>
